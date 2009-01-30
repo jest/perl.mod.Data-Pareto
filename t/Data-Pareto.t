@@ -1,21 +1,53 @@
-use Test::More 'no_plan';
+use Test::More tests => 16;
 
 use Data::Pareto;
 
 # a helper method to calculate Pareto set from given vectors
-sub _p {
+sub _p_obj {
 	my $num = shift;
 	my $opts = { };
 	$opts = shift if @_ && ref($_[0]) eq 'HASH';
-	my $p = new Data::Pareto({ cols => [ 0..$num-1 ], %$opts });
-	$p->addAll([ @_ ]) if @_;
-	return $p->getPareto();
+	my $p = Data::Pareto->new({ cols => [ 0..$num-1 ], %$opts });
+	$p->add(@_) if @_;
+	return $p
+}
+sub _p {
+	_p_obj(@_)->get_pareto_ref();
 }
 
 # same as above, assuming duplicates are allowed
 sub _p_dup {
 	my $num = shift;
-	return _p($num, { duplicates => 1 }, @_);
+	my $opts = { };
+	$opts = shift if @_ && ref($_[0]) eq 'HASH';
+	return _p($num, { duplicates => 1, %$opts }, @_);
+}
+
+##### call context tests
+{
+	# list context
+	my @arr = _p_obj(2, [1,2], [2,1])->get_pareto();
+	my $arr = _p_obj(2, [1,2], [2,1])->get_pareto();
+	is_deeply(
+		\@arr,
+		[ [1,2], [2,1] ]
+	);
+	is($arr, 2);
+	
+	# scalar context
+	my   $scl = _p_obj(2, [1,2], [2,1])->get_pareto_ref();
+	my (@scl) = _p_obj(2, [1,2], [2,1])->get_pareto_ref();
+	is_deeply(
+		$scl,
+		[ [1,2], [2,1] ]
+	);
+	is_deeply(
+		\@scl,
+		[
+			[ [1,2], [2,1] ]
+		]
+	);
+	
 }
 
 ##### simple, <1 element sets
