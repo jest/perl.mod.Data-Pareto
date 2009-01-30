@@ -1,16 +1,13 @@
 Data-Pareto version 0.01
 ========================
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+This simple module makes calculation of Pareto set. Given a set of vectors
+(i.e. arrays of simple scalars), Pareto set is all the vectors from the given
+set which are not dominated by any other vector of the set. 
 
-A README file is required for CPAN modules since CPAN extracts the
-README file from a module distribution so that people browsing the
-archive can use it get an idea of the modules uses. It is usually a
-good idea to provide version information here so that people can
-decide whether fixes for the module are worth downloading.
+Pareto sets play an important role in multiobjective optimization, where
+each non-dominated (i.e. Pareto) vector describes objectives value of
+"optimal" solution to the given problem.
 
 INSTALLATION
 
@@ -21,15 +18,7 @@ To install this module type the following:
    make test
    make install
 
-DEPENDENCIES
-
-This module requires these other modules and libraries:
-
-  blah blah blah
-
 COPYRIGHT AND LICENCE
-
-Put the correct copyright and licence information here.
 
 Copyright (C) 2009 by Przemyslaw Wesolek
 
