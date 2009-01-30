@@ -23,7 +23,7 @@ Data::Pareto - Selecting Pareto sets in Perl
   );
 
   # this returns [ [ 5, "pareto", 10, 11 ], [ 4, "pareto2", 12, 12 ] ]
-  $set->get_pareto;     
+  $set->get_pareto_ref;
 
 =head1 DESCRIPTION
 
