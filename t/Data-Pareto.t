@@ -1,13 +1,17 @@
-use Test::More tests => 16;
+use Test::More tests => 17;
 
-use Data::Pareto;
+BEGIN {
+	use_ok( 'Data::Pareto' );
+}
+
+diag( "Testing Data::Pareto $Data::Pareto::VERSION, Perl $], $^X" );
 
 # a helper method to calculate Pareto set from given vectors
 sub _p_obj {
 	my $num = shift;
 	my $opts = { };
 	$opts = shift if @_ && ref($_[0]) eq 'HASH';
-	my $p = Data::Pareto->new({ cols => [ 0..$num-1 ], %$opts });
+	my $p = Data::Pareto->new({ columns => [ 0..$num-1 ], %$opts });
 	$p->add(@_) if @_;
 	return $p
 }

@@ -1,6 +1,8 @@
 Changes
-Makefile.PL
 MANIFEST
+Makefile.PL
 README
-t/Data-Pareto.t
 lib/Data/Pareto.pm
+t/Data-Pareto.t
+t/pod-coverage.t
+t/pod.t

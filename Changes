@@ -1,6 +1,6 @@
-Revision history for Perl extension Data::Pareto.
+Revision history for Data-Pareto
 
-0.01  Fri Jan 30 10:40:57 2009
-	- original version; created by h2xs 1.23 with options
-		-f -X -n Data::Pareto -b 5.6.0
+0.01    2009-02-03 10:45
+        First version, released on an unsuspecting world.
+
 

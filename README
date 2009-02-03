@@ -1,29 +1,48 @@
-Data-Pareto version 0.01
-========================
+Data-Pareto
 
 This simple module makes calculation of Pareto set. Given a set of vectors
-(i.e. arrays of simple scalars), Pareto set is all the vectors from the given
-set which are not dominated by any other vector of the set. 
+(i.e. of arrays of simple scalars), Pareto set is all the vectors from the
+given set which are not dominated by any other vector of the set. 
 
 Pareto sets play an important role in multiobjective optimization, where
-each non-dominated (i.e. Pareto) vector describes objectives value of
+each non-dominated (i.e. Pareto) vector describes criteria value of
 "optimal" solution to the given problem.
 
 INSTALLATION
 
-To install this module type the following:
+To install this module, run the following commands:
 
-   perl Makefile.PL
-   make
-   make test
-   make install
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc Data::Pareto
+
+You can also look for information at:
+
+    RT, CPAN's request tracker
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Data-Pareto
+
+    AnnoCPAN, Annotated CPAN documentation
+        http://annocpan.org/dist/Data-Pareto
+
+    CPAN Ratings
+        http://cpanratings.perl.org/d/Data-Pareto
+
+    Search CPAN
+        http://search.cpan.org/dist/Data-Pareto
+
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2009 by Przemyslaw Wesolek
+Copyright (C) 2009 Przemyslaw Wesolek
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.10.0 or,
-at your option, any later version of Perl 5 you may have available.
-
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
