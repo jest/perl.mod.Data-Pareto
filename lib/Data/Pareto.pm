@@ -44,14 +44,15 @@ Pareto sets play an important role in multiobjective optimization, where
 each non-dominated (i.e. Pareto) vector describes objectives value of
 "optimal" solution to the given problem.
 
-This module allows occurance of duplicates in the set - this makes it
+This module allows occurrence of duplicates in the set - this makes it
 rather a bag than a set, but is useful in practice (e.g. when we want to
 preserve two solutions giving the same objectives value, but structurally
 different). This assumption influences dominance definition given above:
 two duplicates never dominate each other and hence can be present in the Pareto
-set. This is controlled by C<duplicates> option passed to L<new>: if set to
-C<true> value, duplicates are allowed in Pareto set; otherwise, only the first
-found element of the subset of duplicated vectors is preserved in Pareto set.
+set. This is controlled by C<duplicates> option passed to L<new()|new>: if set
+to C<true> value, duplicates are allowed in Pareto set; otherwise, only the
+first found element of the subset of duplicated vectors is preserved in Pareto
+set.
 
 =head1 FUNCTIONS
 
@@ -192,7 +193,7 @@ sub _update_pareto {
 
 Returns C<true>, if the first vector passed is dominated by the second one.
 The comparison is made based on the values in vectors' columns, which
-were passed to L<new>.
+were passed to L<new()|new>.
 
 The vectors passed are never duplicates of each other when this method is
 called from inside this module. 
@@ -250,7 +251,7 @@ of techniques which might be applied to improve the performance:
 =over
 
 =item * defer the phase of removing vectors dominated by newly added vectors
-to L<get_pareto> call; this results in smaller number of arrays rewritings.
+to L<get_pareto()|get_pareto> call; this results in smaller number of arrays rewritings.
 
 =item * split the set of vectors being added into smaller subsets, calculate
 Pareto sets for such subsets, and then apply insertion of resulting Pareto
