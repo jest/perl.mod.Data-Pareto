@@ -1,6 +1,7 @@
 Revision history for Data-Pareto
 
 0.02    ?
+        * Added invalid values concept
         * Corrected licensing generation in META.yml.
 
 0.01    2009-02-03 10:45

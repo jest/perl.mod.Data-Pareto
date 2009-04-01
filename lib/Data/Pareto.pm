@@ -9,11 +9,11 @@ Data::Pareto - Computing Pareto sets in Perl
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01_01';
+our $VERSION = '0.01_02';
 
 =head1 SYNOPSIS
 
@@ -54,6 +54,10 @@ to C<true> value, duplicates are allowed in Pareto set; otherwise, only the
 first found element of the subset of duplicated vectors is preserved in Pareto
 set.
 
+The values are allowed to be invalid. The meaning of 'invalid' is 'the worst
+possible'. It's different concept than 'unknown', which makes the definition of
+domination less clear.
+
 =head1 FUNCTIONS
 
 By default, a vector is passed around as a ref to array of consecutive column
@@ -87,6 +91,16 @@ If set to C<true> value, duplicated vectors are all put in Pareto set (if they
 are Pareto, of course). If set to C<false>, duplicates of vectors already
 in the Pareto set are discarded.
 
+=item * C<invalid>
+
+The value considered invalid in pareto set. Such value is dominated by
+any value and dominates only invalid value.
+
+However, computations of domination in presence of invalid values can be
+considerably slower, as much as 5 times. So it probably will be faster to first
+parse the data and replace invalid markers with some huge-and-surely-dominated
+values.
+
 =back
 
 =cut
@@ -94,9 +108,19 @@ in the Pareto set are discarded.
 
 sub new {
 	my ($class, $attrs) = @_;
-	my $self = { %$attrs };
-	$self->{pareto} = [ ];
-	$self->{vectorStatus} = { };
+	my $self = {
+		pareto => [ ],
+		vectorStatus => { },
+		%$attrs
+	};
+	if (exists $self->{invalid}) {
+		my $inv = $self->{invalid};
+		$self->{_sub_is_invalid} = sub { $_[0] eq $inv };
+		$self->{_sub_is_dominated} = \&_is_dominated_with_invalid;
+	} else {
+		$self->{_sub_is_invalid} = sub { 0 };
+		$self->{_sub_is_dominated} = \&_is_dominated_without_invalid;
+	}
 	return bless $self, $class;
 }
 
@@ -162,17 +186,17 @@ sub _update_pareto {
 	for my $o (@{$self->{pareto}}) {
 		if ($surePareto) {
 			# preserve the current vector only if it is not dominated by new (now Pareto) vector
-			if ($self->is_dominated($o, $NV)) {
+			if ($self->{_sub_is_dominated}($self, $o, $NV)) {
 				$self->_ban_vector($o);
 			} else {
 				push @newP, $o;
 			}
 		} else {
 			# stop processing with unchanged Pareto set if the new vector is dominated by the current one
-			return if $self->is_dominated($NV, $o);
+			return if $self->{_sub_is_dominated}($self, $NV, $o);
 			
 			# mark new vector as "sure Pareto" only if it dominates the current vector
-			if ($self->is_dominated($o, $NV)) {
+			if ($self->{_sub_is_dominated}($self, $o, $NV)) {
 				$surePareto = 1;
 				# ...and hence we don't preserve the dominated current vector
 				$self->_ban_vector($o);
@@ -191,16 +215,20 @@ sub _update_pareto {
 
 =head2 is_dominated
 
-Returns C<true>, if the first vector passed is dominated by the second one.
+Checks if the first vector passed is dominated by the second one.
 The comparison is made based on the values in vectors' columns, which
 were passed to L<new()|new>.
 
 The vectors passed are never duplicates of each other when this method is
-called from inside this module. 
+called from inside this module.
+
+Returns C<true>, when the first vector from arguments list
+dominates the other and C<false> otherwise.
 
 =cut
 
-sub is_dominated {
+sub is_dominated { $_[0]->{_sub_is_dominated}(@_); }
+sub _is_dominated_without_invalid {
 	my ($self, $dominated, $by) = @_;
 	for my $c (@{$self->{columns}}) {
 		return 0 if $dominated->[$c] < $by->[$c];
@@ -208,6 +236,24 @@ sub is_dominated {
 
 	1;
 }
+sub _is_dominated_with_invalid {
+	my ($self, $dominated, $by) = @_;
+	for my $c (@{$self->{columns}}) {
+		next if $self->{_sub_is_invalid}($dominated->[$c]);	# invalid dominated by anything
+		return 0 if $self->{_sub_is_invalid}($by->[$c]) || $dominated->[$c] < $by->[$c];
+	}
+
+	1;
+}
+
+=head2 is_invalid
+
+Checks if the given value is considered invalid for the current object.
+Every value is valid by default.
+
+=cut
+
+sub is_invalid { return $_[0]->{_sub_is_invalid}($_[1]); }
 
 # calculate the string repr. of a vector; to be used as a hash key
 sub _vector_key {

@@ -1,4 +1,4 @@
-use Test::More tests => 17;
+use Test::More tests => 26;
 
 BEGIN {
 	use_ok( 'Data::Pareto' );
@@ -26,6 +26,20 @@ sub _p_dup {
 	$opts = shift if @_ && ref($_[0]) eq 'HASH';
 	return _p($num, { duplicates => 1, %$opts }, @_);
 }
+
+##### different subs behaviour depending on params
+{
+	my $p = _p_obj(1, [1]);
+	ok( ! $p->is_invalid(0));
+	ok( ! $p->is_invalid('?'));
+	
+	$p = _p_obj(1, { invalid => '?' }, [1]);
+	ok( $p->is_invalid('?'));
+	ok( ! $p->is_invalid(0));
+	ok( ! $p->is_invalid('!'));
+	ok( ! $p->is_invalid('?!'));
+}
+
 
 ##### call context tests
 {
@@ -121,3 +135,21 @@ is_deeply (
 	_p(3, [1,2,9], [2,2,8], [3,3,7], [4,3,6], [5,7,5]),
 	[ [1,2,9], [2,2,8], [3,3,7], [4,3,6], [5,7,5] ]
 );
+
+##### invalid values
+
+is_deeply (
+	_p(3, {invalid => '?'}, [1,'?',2], [0,1,2]),
+	[ [0,1,2] ]
+);
+
+is_deeply (
+	_p(3, {invalid => '?'}, [0,'?',2], [1,1,2]),
+	[ [0,'?',2], [1,1,2] ]
+);
+
+is_deeply (
+	_p(4, {invalid => '?'}, [0,'?',2,2], [1,1,'?',2]),
+	[ [0,'?',2,2], [1,1,'?',2] ]
+);
+
