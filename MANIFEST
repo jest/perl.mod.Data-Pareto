@@ -3,8 +3,8 @@ lib/Data/Pareto.pm
 Makefile.PL
 MANIFEST
 README
-t/Data-Pareto.t
-t/kwalitee.t
-t/meta.t
-t/pod-coverage.t
-t/pod.t
+t/01_Data-Pareto.t
+t/97_meta.t
+t/97_pod-coverage.t
+t/97_pod.t
+t/98_kwalitee.t
