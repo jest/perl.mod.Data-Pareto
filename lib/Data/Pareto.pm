@@ -13,7 +13,7 @@ Version 0.02
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.02_01';
 
 =head1 SYNOPSIS
 
@@ -21,7 +21,7 @@ our $VERSION = '0.02';
   
   # only first and third columns are used in comparison
   # the others are simply descriptive
-  my $set = new Data::Pareto(columns => [0, 2]);
+  my $set = new Data::Pareto({ columns => [0, 2] });
   $set->add(
       [ 5, "pareto", 10, 11 ],
       [ 5, "dominated", 11, 9 ],
