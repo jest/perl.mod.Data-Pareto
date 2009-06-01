@@ -1,6 +1,6 @@
 Revision history for Data-Pareto
 
-0.03    ?
+0.03    2009-06-01
         * Examples and documentation fixes (#45220).
         * Dominator subs for custom comparison introduced.
 
