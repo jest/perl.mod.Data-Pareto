@@ -3,17 +3,19 @@ package Data::Pareto;
 use warnings;
 use strict;
 
+use Scalar::Util qw( reftype );
+
 =head1 NAME
 
 Data::Pareto - Computing Pareto sets in Perl
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02_01';
+our $VERSION = '0.02_02';
 
 =head1 SYNOPSIS
 
@@ -21,7 +23,7 @@ our $VERSION = '0.02_01';
   
   # only first and third columns are used in comparison
   # the others are simply descriptive
-  my $set = new Data::Pareto({ columns => [0, 2] });
+  my $set = new Data::Pareto( { columns => [0, 2] } );
   $set->add(
       [ 5, "pareto", 10, 11 ],
       [ 5, "dominated", 11, 9 ],
@@ -55,8 +57,12 @@ first found element of the subset of duplicated vectors is preserved in Pareto
 set.
 
 The values are allowed to be invalid. The meaning of 'invalid' is 'the worst
-possible'. It's different concept than 'unknown', which makes the definition of
-domination less clear.
+possible'. It's different concept than 'unknown'; unknown value make the
+definition of domination less clear.
+
+By default, the comparison of column values is numerical and the smaller
+value dominates the larger one. If you want to override this behaviour, pass
+your own dominator sub in arguments to L<new()|new>.
 
 =head1 FUNCTIONS
 
@@ -70,7 +76,7 @@ values. This means you shouldn't mess with it after passing to C<add> method.
 
 Creates a new object for calculating Pareto set.
 
-The argument passed is a hashref with options; the recognized options are:
+The first argument passed is a hashref with options; the recognized options are:
 
 =over
 
@@ -101,27 +107,63 @@ considerably slower, as much as 5 times. So it probably will be faster to first
 parse the data and replace invalid markers with some huge-and-surely-dominated
 values.
 
+=item * C<column_dominator>
+
+The sub(s) used to compare specific column values and determining domination
+between them. Either sub ref or hash ref. If not set, the default is that
+the numerically smaller value dominates the other one.
+
+During creation of Pareto set, this sub is called with three arguments:
+column number, first vector's value, second vector's value, and should return
+C<true>, when the second value dominates the first one, assuming they appeared
+in the specified column.
+
+Make sure that your sub returns C<true> when two passed values are the same. 
+This is necessary to obey the whole Pareto set domination contract.
+ 
+There are two approaches possible when the values in different columns are of
+different types, in the sense of domination. First, you can use passed column
+number to decide the domination check function. Alternatively, you can pass a
+hash ref with mapping from the column number to the sub ref used to compare the
+given column:
+
+  my $lexi_dominator = sub {
+      my ($col, $dominated, $by) = @_;
+      return ($dominated ge $by);
+  };
+  my $num_dominator = sub {
+      my ($col, $dominated, $by) = @_;
+      return ($dominated >= $by);
+  }
+  
+  my $set = new Data::Pareto({
+  	  columns => [0, 2],
+  	  column_dominator => {
+  	  	  0 => $lexi_dominator,
+  	  	  2 => $num_dominator
+  	  }
+  });
+  $set->add(['a', 'label 1', 12], ['b', 'label 2', 9]);
+
 =back
+
+The rest of arguments are assumed to be vectors, and passed to L<add()|add>
+method.
 
 =cut
 
 
 sub new {
-	my ($class, $attrs) = @_;
-	my $self = {
+	my ($class, $attrs) = (shift, shift);
+	my $self = bless {
 		pareto => [ ],
 		vectorStatus => { },
 		%$attrs
-	};
-	if (exists $self->{invalid}) {
-		my $inv = $self->{invalid};
-		$self->{_sub_is_invalid} = sub { $_[0] eq $inv };
-		$self->{_sub_is_dominated} = \&_is_dominated_with_invalid;
-	} else {
-		$self->{_sub_is_invalid} = sub { 0 };
-		$self->{_sub_is_dominated} = \&_is_dominated_without_invalid;
-	}
-	return bless $self, $class;
+	}, $class;
+	$self->_construct_subs;
+	
+	$self->add(@_) if @_;
+	return $self;
 }
 
 =head2 add
@@ -223,27 +265,72 @@ The vectors passed are never duplicates of each other when this method is
 called from inside this module.
 
 Returns C<true>, when the first vector from arguments list
-dominates the other and C<false> otherwise.
+is dominated by the other one, and C<false> otherwise.
 
 =cut
 
-sub is_dominated { $_[0]->{_sub_is_dominated}(@_); }
-sub _is_dominated_without_invalid {
-	my ($self, $dominated, $by) = @_;
-	for my $c (@{$self->{columns}}) {
-		return 0 if $dominated->[$c] < $by->[$c];
-	}
+sub is_dominated { $_[0]->{_sub_is_dominated}(@_); }	# pass the whole @_, as the sub thinks it is a method
 
-	1;
-}
-sub _is_dominated_with_invalid {
-	my ($self, $dominated, $by) = @_;
-	for my $c (@{$self->{columns}}) {
-		next if $self->{_sub_is_invalid}($dominated->[$c]);	# invalid dominated by anything
-		return 0 if $self->{_sub_is_invalid}($by->[$c]) || $dominated->[$c] < $by->[$c];
-	}
+# these are is_dominated() parts which will be composed into the function,
+# depending on the constructor options.
+my %_is_dominated_parts = (
+	invalid => <<'_EOT_',
+			next if $self->{_sub_is_invalid}($dominated->[$col]);	# invalid dominated by anything
+			return 0 if $self->{_sub_is_invalid}($by->[$col]);	# invalid can't dominate valid
+_EOT_
+	std_cmp => <<'_EOT_',
+			($dominated->[$col] >= $by->[$col])
+_EOT_
+	custom_cmp => <<'_EOT_',
+			$self->{column_dominator}($col, $dominated->[$col], $by->[$col])
+_EOT_
+	custom_cmp_hash => <<'_EOT_',
+			$self->{column_dominator}{$col}($col, $dominated->[$col], $by->[$col])
+_EOT_
 
-	1;
+);
+ 
+sub _construct_subs {
+	my ($self) = @_;
+	
+	my $invalid_part;
+	if (exists $self->{invalid}) {
+		my $inv = $self->{invalid};
+		$self->{_sub_is_invalid} = sub { $_[0] eq $inv };
+		$invalid_part = $_is_dominated_parts{invalid};
+	} else {
+		$self->{_sub_is_invalid} = sub { 0 };
+		$invalid_part = '';
+	}
+	
+	my $cmp_part;
+	if (exists $self->{column_dominator}) {
+		my $type = reftype $self->{column_dominator};
+		if ($type && $type eq 'HASH') {
+			$cmp_part = $_is_dominated_parts{custom_cmp_hash};
+		} else {
+			$cmp_part = $_is_dominated_parts{custom_cmp};
+		}
+	} else {
+		$cmp_part = $_is_dominated_parts{std_cmp};
+	}
+	
+	my $sub_str = <<'_EOT_'
+		sub {
+			my ($self, $dominated, $by) = @_;
+			for my $col (@{$self->{columns}}) {
+_EOT_
+. <<_EOT_
+				$invalid_part
+				return 0 unless $cmp_part;
+_EOT_
+. <<'_EOT_'
+			}
+			1;
+		}
+_EOT_
+;
+	$self->{_sub_is_dominated} = eval $sub_str;
 }
 
 =head2 is_invalid

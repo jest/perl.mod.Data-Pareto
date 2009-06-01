@@ -1,4 +1,8 @@
-use Test::More tests => 26;
+use Test::More tests => 40;
+
+# TODO: is it OK to garbage users' screen?
+#use Carp;
+#$SIG{ __DIE__ } = sub { Carp::confess( @_ ) };
 
 BEGIN {
 	use_ok( 'Data::Pareto' );
@@ -29,7 +33,8 @@ sub _p_dup {
 
 ##### different subs behaviour depending on params
 {
-	my $p = _p_obj(1, [1]);
+	## invalid values
+	my $p = _p_obj(1);
 	ok( ! $p->is_invalid(0));
 	ok( ! $p->is_invalid('?'));
 	
@@ -38,6 +43,40 @@ sub _p_dup {
 	ok( ! $p->is_invalid(0));
 	ok( ! $p->is_invalid('!'));
 	ok( ! $p->is_invalid('?!'));
+	
+	## domination subs
+	$p = _p_obj(2);
+	ok( $p->is_dominated([1, 3], [1, 2]));
+	ok( !$p->is_dominated([1, 2], [1, 3]));
+	ok( $p->is_dominated([3, 1], [2, 1]));
+	ok( !$p->is_dominated([2, 1], [3, 1]));
+
+	## custom domination subs -- lexicographic one
+	my $lexi_dominator = sub {
+		my ($col, $dominated, $by) = @_;
+		return ($dominated ge $by);
+	};
+	$p = _p_obj(2, { column_dominator =>  $lexi_dominator });
+	ok( $p->is_dominated(['b', 2], ['a', 2]));
+	ok( ! $p->is_dominated(['a', 2], ['b', 2]));
+	ok( $p->is_dominated(['a', 3], ['a', 2]));
+	ok( ! $p->is_dominated(['a', 2], ['a', 3]));
+	ok( ! $p->is_dominated(['a', 3], ['b', 2]));
+	ok( ! $p->is_dominated(['b', 2], ['a', 3]));
+	
+	ok( $p->is_dominated(['a', 2], ['a', 12]));	# numbers are ALSO compared as strings!
+	ok( ! $p->is_dominated(['a', 12], ['a', 2]));
+	
+	## custom domination subs -- many of them
+	$p = _p_obj(2, { column_dominator => {
+		0 => $lexi_dominator,
+		1 => sub {
+			my ($col, $dominated, $by) = @_;
+			return ($dominated >= $by);
+		}
+	}});
+	ok( ! $p->is_dominated(['a', 2], ['a', 12]));	# now numbers are compared as numbers
+	ok( $p->is_dominated(['a', 12], ['a', 2]));
 }
 
 

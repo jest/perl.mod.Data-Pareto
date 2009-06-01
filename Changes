@@ -1,7 +1,8 @@
 Revision history for Data-Pareto
 
 0.03    ?
-        * examples fixes (#45220)
+        * Examples and documentation fixes (#45220).
+        * Dominator subs for custom comparison introduced.
 
 0.02    2009-04-21
         * Added invalid values concept.
