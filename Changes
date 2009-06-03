@@ -1,5 +1,8 @@
 Revision history for Data-Pareto
 
+0.04    2009-06-03
+        * Added a few built-in dominators
+
 0.03    2009-06-01
         * Examples and documentation fixes (#45220).
         * Dominator subs for custom comparison introduced.

@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use Scalar::Util qw( reftype );
+use Carp;
 
 =head1 NAME
 
@@ -11,11 +12,11 @@ Data::Pareto - Computing Pareto sets in Perl
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 SYNOPSIS
 
@@ -110,10 +111,30 @@ values.
 =item * C<column_dominator>
 
 The sub(s) used to compare specific column values and determining domination
-between them. Either sub ref or hash ref. If not set, the default is that
+between them. Scalar, sub ref or hash ref. If not set, the default is that
 the numerically smaller value dominates the other one.
 
-During creation of Pareto set, this sub is called with three arguments:
+When the scalar is passed, it is assumed to be the name of a predefined
+dominator. This is a much faster option to specifying the sub of your own.
+Recognized dominators are:
+
+=over
+
+=item * C<min> numerically smaller value dominates
+
+=item * C<max> numerically greater value dominates
+
+=item * C<lexi> earlier in collation order value dominates (lexicographical
+order) 
+
+=item * C<lexi_rev> later in collation order value dominates (reversed
+lexicographical order) 
+
+=item * C<std> standard, i.e. C<min> dominator
+
+=back
+
+During creation of Pareto set, the dominator sub is called with three arguments:
 column number, first vector's value, second vector's value, and should return
 C<true>, when the second value dominates the first one, assuming they appeared
 in the specified column.
@@ -131,7 +152,7 @@ given column:
       my ($col, $dominated, $by) = @_;
       return ($dominated ge $by);
   };
-  my $num_dominator = sub {
+  my $min_dominator = sub {
       my ($col, $dominated, $by) = @_;
       return ($dominated >= $by);
   }
@@ -140,7 +161,7 @@ given column:
   	  columns => [0, 2],
   	  column_dominator => {
   	  	  0 => $lexi_dominator,
-  	  	  2 => $num_dominator
+  	  	  2 => $min_dominator
   	  }
   });
   $set->add(['a', 'label 1', 12], ['b', 'label 2', 9]);
@@ -278,17 +299,20 @@ my %_is_dominated_parts = (
 			next if $self->{_sub_is_invalid}($dominated->[$col]);	# invalid dominated by anything
 			return 0 if $self->{_sub_is_invalid}($by->[$col]);	# invalid can't dominate valid
 _EOT_
-	std_cmp => <<'_EOT_',
-			($dominated->[$col] >= $by->[$col])
-_EOT_
-	custom_cmp => <<'_EOT_',
+	dominator_min => '($dominated->[$col] >= $by->[$col])',
+	dominator_max => '($dominated->[$col] <= $by->[$col])',
+	dominator_lexi => '($dominated->[$col] ge $by->[$col])',
+	dominator_lexi_rev => '($dominated->[$col] le $by->[$col])',
+	
+	_dominator_custom => <<'_EOT_',
 			$self->{column_dominator}($col, $dominated->[$col], $by->[$col])
 _EOT_
-	custom_cmp_hash => <<'_EOT_',
+	_dominator_custom_hash => <<'_EOT_',
 			$self->{column_dominator}{$col}($col, $dominated->[$col], $by->[$col])
 _EOT_
 
 );
+$_is_dominated_parts{dominator_std} = $_is_dominated_parts{dominator_min};
  
 sub _construct_subs {
 	my ($self) = @_;
@@ -305,14 +329,19 @@ sub _construct_subs {
 	
 	my $cmp_part;
 	if (exists $self->{column_dominator}) {
-		my $type = reftype $self->{column_dominator};
-		if ($type && $type eq 'HASH') {
-			$cmp_part = $_is_dominated_parts{custom_cmp_hash};
+		my $dom = $self->{column_dominator} || '';
+		my $type = reftype $dom;
+		if (!defined $type) {
+			# builtin
+			$cmp_part = $_is_dominated_parts{"dominator_$dom"};
+			croak "Unrecognized dominator builtin '$dom'" unless $cmp_part;
+		} elsif ($type && $type eq 'HASH') {
+			$cmp_part = $_is_dominated_parts{_dominator_custom_hash};
 		} else {
-			$cmp_part = $_is_dominated_parts{custom_cmp};
+			$cmp_part = $_is_dominated_parts{_dominator_custom};
 		}
 	} else {
-		$cmp_part = $_is_dominated_parts{std_cmp};
+		$cmp_part = $_is_dominated_parts{dominator_std};
 	}
 	
 	my $sub_str = <<'_EOT_'
@@ -323,8 +352,6 @@ _EOT_
 . <<_EOT_
 				$invalid_part
 				return 0 unless $cmp_part;
-_EOT_
-. <<'_EOT_'
 			}
 			1;
 		}
@@ -378,13 +405,16 @@ sub _mark_vector {
 
 =head1 TODO
 
+Allow specifying built-in dominators inside dominator hash.
+
 For large data sets calculations become time-intensive. There are a couple
 of techniques which might be applied to improve the performance:
 
 =over
 
 =item * defer the phase of removing vectors dominated by newly added vectors
-to L<get_pareto()|get_pareto> call; this results in smaller number of arrays rewritings.
+to L<get_pareto()|get_pareto> call; this results in smaller number of arrays
+rewritings.
 
 =item * split the set of vectors being added into smaller subsets, calculate
 Pareto sets for such subsets, and then apply insertion of resulting Pareto

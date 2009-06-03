@@ -1,4 +1,4 @@
-use Test::More tests => 40;
+use Test::More tests => 50;
 
 # TODO: is it OK to garbage users' screen?
 #use Carp;
@@ -77,6 +77,26 @@ sub _p_dup {
 	}});
 	ok( ! $p->is_dominated(['a', 2], ['a', 12]));	# now numbers are compared as numbers
 	ok( $p->is_dominated(['a', 12], ['a', 2]));
+	
+	## custom domination subs -- builtin
+	ok( _p_obj(2, { column_dominator => 'min' })->is_dominated([1, 3], [1, 2]) );
+	ok( ! _p_obj(2, { column_dominator => 'min' })->is_dominated([1, 2], [1, 3]) );
+	ok( _p_obj(2, { column_dominator => 'max' })->is_dominated([1, 2], [1, 3]) );
+	ok( ! _p_obj(2, { column_dominator => 'max' })->is_dominated([1, 3], [1, 2]) );
+	ok( _p_obj(2, { column_dominator => 'lexi' })->is_dominated(['ewa', 'ja'], ['ela', 'ja']) );
+	ok( ! _p_obj(2, { column_dominator => 'lexi' })->is_dominated(['ela', 'ja'], ['ewa', 'ja']) );
+	ok( _p_obj(2, { column_dominator => 'lexi_rev' })->is_dominated(['ela', 'ja'], ['ewa', 'ja']) );
+	ok( ! _p_obj(2, { column_dominator => 'lexi_rev' })->is_dominated(['ewa', 'ja'], ['ela', 'ja']) );
+	SKIP: {
+		my $test_exception_exception;
+		BEGIN {
+			eval { require Test::Exception; Test::Exception->import; };
+			$test_exception_exception = $@;
+		}
+		skip 'Test::Exception is not installed', 2 if $test_exception_exception;
+		throws_ok { _p_obj(1, { column_dominator => 'blabla' }) } qr/unrecognized.*builtin/i, 'died correctly';
+		throws_ok { _p_obj(1, { column_dominator => undef }) } qr/unrecognized.*builtin/i, 'died correctly';
+	}
 }
 
 
