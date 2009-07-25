@@ -1,6 +1,6 @@
 ---
 name: Data-Pareto
-version: 0.04
+version: 0.05
 author:
   - 'Przemyslaw Wesolek <jest@go.art.pl>'
 abstract: Computing Pareto sets in Perl
@@ -15,7 +15,7 @@ build_requires:
 provides:
   Data::Pareto:
     file: lib/Data/Pareto.pm
-    version: 0.04
+    version: 0.05
 generated_by: Module::Build version 0.33
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
