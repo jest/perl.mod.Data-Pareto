@@ -1,7 +1,9 @@
+Build.PL
 Changes
 lib/Data/Pareto.pm
 Makefile.PL
 MANIFEST
+META.yml
 README
 t/01_Data-Pareto.t
 t/97_meta.t
