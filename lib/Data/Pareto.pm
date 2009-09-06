@@ -464,10 +464,12 @@ L<http://search.cpan.org/dist/Data-Pareto>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2009 Przemyslaw Wesolek, all rights reserved.
+
+Copyright 2009 Przemyslaw Wesolek
 
 This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+under the terms of the Artistic License 2.0. For details, see the full
+text of the license in the file LICENSE.
 
 =cut
 

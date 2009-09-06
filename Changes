@@ -2,6 +2,7 @@ Revision history for Data-Pareto
 
 0.05	???
         * Converted build process to Module::Build.
+        * Changed license to Artistic License 2.0.
 
 0.04    2009-06-03
         * Added a few built-in dominators.
