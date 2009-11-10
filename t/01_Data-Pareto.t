@@ -1,12 +1,10 @@
-use Test::More tests => 50;
+use Test::More tests => 49;
 
 # TODO: is it OK to garbage users' screen?
 #use Carp;
 #$SIG{ __DIE__ } = sub { Carp::confess( @_ ) };
 
-BEGIN {
-	use_ok( 'Data::Pareto' );
-}
+use Data::Pareto;
 
 diag( "Testing Data::Pareto $Data::Pareto::VERSION, Perl $], $^X" );
 
