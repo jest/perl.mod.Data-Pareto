@@ -4,9 +4,9 @@ version: 0.05
 author:
   - 'Przemyslaw Wesolek <jest@go.art.pl>'
 abstract: Computing Pareto sets in Perl
-license: perl
+license: artistic_2
 resources:
-  license: http://dev.perl.org/licenses/
+  license: http://www.perlfoundation.org/artistic_license_2_0
 requires:
   Carp: 0
   Scalar::Util: 0

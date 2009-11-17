@@ -5,7 +5,7 @@ use Module::Build;
 
 my $build = Module::Build->new(
 	module_name => 'Data::Pareto',
-	license => 'perl',
+	license => 'artistic_2',
 	dist_author => 'Przemyslaw Wesolek <jest@go.art.pl>',
 	requires => {
 		'Scalar::Util' => 0,

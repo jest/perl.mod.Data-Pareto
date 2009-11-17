@@ -7,7 +7,7 @@ WriteMakefile(
     AUTHOR              => 'Przemyslaw Wesolek <jest@go.art.pl>',
     VERSION_FROM        => 'lib/Data/Pareto.pm',
     ABSTRACT_FROM       => 'lib/Data/Pareto.pm',
-    LICENSE             => 'perl',
+    LICENSE             => 'artistic_2',
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More' => 0,
