@@ -7,6 +7,8 @@ abstract: Computing Pareto sets in Perl
 license: artistic_2
 resources:
   license: http://www.perlfoundation.org/artistic_license_2_0
+  bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=Data-Pareto
+  repository: http://github.com/jest/perl.mod.Data-Pareto
 requires:
   Carp: 0
   Scalar::Util: 0
