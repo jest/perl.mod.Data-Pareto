@@ -357,7 +357,7 @@ _EOT_
 		}
 _EOT_
 ;
-	$self->{_sub_is_dominated} = eval $sub_str;
+	$self->{_sub_is_dominated} = eval $sub_str;	## no critic
 }
 
 =head2 is_invalid
